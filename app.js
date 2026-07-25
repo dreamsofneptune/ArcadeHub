@@ -115,3 +115,21 @@ document.addEventListener('DOMContentLoaded', () => {
     loginBox.classList.remove('hidden');
   }
 });
+
+// Abrir el juego en el popup
+function openGame(gameUrl) {
+  const modal = document.getElementById('game-modal');
+  const iframe = document.getElementById('game-iframe');
+  
+  iframe.src = gameUrl;
+  modal.classList.remove('hidden');
+}
+
+// Cerrar el juego y detener la ejecución
+function closeGame() {
+  const modal = document.getElementById('game-modal');
+  const iframe = document.getElementById('game-iframe');
+  
+  iframe.src = ''; // Limpia la URL para que el juego deje de sonar/ejecutarse de fondo
+  modal.classList.add('hidden');
+}

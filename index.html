@@ -96,13 +96,27 @@
             <h3>Asteroid Shooter</h3>
             <p>Sobrevive y destruye los asteroides en el espacio profundo.</p>
           </div>
-          <a class="btn btn-play" href="games/asteroid-shooter/index.html">JUGAR AHORA</a>
+          <!-- Ahora ejecuta una función JS en lugar de cambiar de página -->
+          <button class="btn btn-play" onclick="openGame('games/asteroid-shooter/index.html')">JUGAR AHORA</button>
         </div>
       </main>
 
       <footer>
         © 2026 Dreams Of Neptune Games
       </footer>
+    </div>
+  </div>
+
+  <!-- POPUP / MODAL DEL JUEGO -->
+  <div id="game-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span>Asteroid Shooter — Dreams Of Neptune</span>
+        <button class="btn-close" onclick="closeGame()">✕ CERRAR JUEGO</button>
+      </div>
+      <div class="modal-body">
+        <iframe id="game-iframe" src="" frameborder="0" allow="cross-origin-isolated"></iframe>
+      </div>
     </div>
   </div>
 
