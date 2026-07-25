@@ -1,264 +1,292 @@
-/* === CONFIGURACIÓN Y VARIABLES GENERALES === */
 :root {
-  --bg-color: #0b0f19;
-  --panel-bg: #151c2e;
-  --accent-color: #00ffcc;
-  --accent-hover: #00cca3;
-  --text-main: #f0f4f8;
-  --text-muted: #8a99ad;
-  --danger-color: #ff4757;
-  --border-radius: 8px;
+  --bg-dark: #05080f;
+  --card-bg: rgba(10, 16, 28, 0.85);
+  --accent-cyan: #00f2fe;
+  --accent-blue: #4f9da6;
+  --text-main: #e0f2fe;
+  --text-muted: #8ba0b5;
+  --border-cyan: rgba(79, 157, 166, 0.35);
+  --error-color: #ff4d4d;
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 body {
-  background-color: var(--bg-color);
+  font-family: 'Rajdhani', sans-serif;
+  background: radial-gradient(circle at center, #111a2e 0%, var(--bg-dark) 100%);
   color: var(--text-main);
   min-height: 100vh;
   display: flex;
-  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow-x: hidden;
 }
 
-.view {
+/* Pantallas y contenedores generales */
+.screen {
   width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#login-screen {
+  max-width: 440px;
+  padding: 20px;
+}
+
+#catalog-screen {
+  flex-direction: column;
+  width: 100%;
+  max-width: 1100px;
   min-height: 100vh;
+  justify-content: flex-start;
+  padding: 30px 20px;
+}
+
+/* Tarjetas de autenticación */
+.auth-box {
+  width: 100%;
+  background: var(--card-bg);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-cyan);
+  border-radius: 12px;
+  padding: 40px 32px;
+  box-shadow: 0 0 35px rgba(0, 0, 0, 0.9), 0 0 15px rgba(0, 242, 254, 0.1);
+  text-align: center;
+}
+
+/* Marca DreamsOfNeptune */
+.brand-title {
+  font-family: 'Cinzel', serif;
+  font-size: 2.1rem;
+  font-weight: 900;
+  letter-spacing: 3px;
+  color: #ffffff;
+  text-shadow: 0 0 12px var(--accent-cyan);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.brand-subtitle {
+  font-size: 0.85rem;
+  letter-spacing: 3px;
+  color: var(--accent-blue);
+  text-transform: uppercase;
+  margin-bottom: 28px;
+}
+
+/* Inputs de formularios */
+.input-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.input-group label {
+  display: block;
+  font-size: 0.85rem;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(5, 8, 15, 0.85);
+  border: 1px solid var(--border-cyan);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 1rem;
+  font-family: 'Rajdhani', sans-serif;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.input-group input:focus {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 12px rgba(0, 242, 254, 0.3);
+}
+
+/* Botones principales */
+.btn-primary {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #133a52 0%, #008ca8 100%);
+  border: 1px solid var(--accent-cyan);
+  border-radius: 6px;
+  color: #ffffff;
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 8px;
+  text-transform: uppercase;
+}
+
+.btn-primary:hover {
+  box-shadow: 0 0 22px rgba(0, 242, 254, 0.5);
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #1b4d6e 0%, #00a3c4 100%);
+}
+
+.switch-text {
+  margin-top: 22px;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.switch-text a {
+  color: var(--accent-cyan);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.switch-text a:hover {
+  text-decoration: underline;
+}
+
+.error-msg {
+  color: var(--error-color);
+  font-size: 0.85rem;
+  margin-top: 12px;
+  font-weight: 600;
 }
 
 .hidden {
   display: none !important;
 }
 
-/* === PANTALLA DE AUTENTICACIÓN (LOGIN / REGISTRO) === */
-#login-screen {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-.card {
-  background: var(--panel-bg);
-  border-radius: var(--border-radius);
-  padding: 40px;
+/* Estilos del Catálogo */
+.catalog-header {
   width: 100%;
-  max-width: 400px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.card-header {
-  text-align: center;
-  margin-bottom: 24px;
-}
-
-.card-header h1 {
-  color: var(--accent-color);
-  font-size: 1.8rem;
-  letter-spacing: 2px;
-}
-
-.card-header p {
-  color: var(--text-muted);
-  font-size: 0.9rem;
-  margin-top: 6px;
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  text-transform: uppercase;
-}
-
-.form-group input {
-  width: 100%;
-  padding: 12px;
-  border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.2);
-  color: var(--text-main);
-  font-size: 1rem;
-  outline: none;
-}
-
-.form-group input:focus {
-  border-color: var(--accent-color);
-}
-
-.error-msg {
-  color: var(--danger-color);
-  font-size: 0.85rem;
-  margin-bottom: 16px;
-  text-align: center;
-}
-
-.switch-mode {
-  text-align: center;
-  margin-top: 18px;
-  font-size: 0.85rem;
-  color: var(--text-muted);
-}
-
-.switch-mode a {
-  color: var(--accent-color);
-  text-decoration: none;
-  font-weight: bold;
-}
-
-.switch-mode a:hover {
-  text-decoration: underline;
-}
-
-/* === BOTONES === */
-.btn {
-  display: inline-block;
-  width: 100%;
-  padding: 12px;
-  border: none;
-  border-radius: 4px;
-  font-weight: bold;
-  cursor: pointer;
-  text-align: center;
-  text-decoration: none;
-  transition: background 0.2s;
-}
-
-.primary-btn {
-  background: var(--accent-color);
-  color: var(--bg-color);
-}
-
-.primary-btn:hover {
-  background: var(--accent-hover);
-}
-
-.secondary-btn {
-  background: transparent;
-  color: var(--text-muted);
-  border: 1px solid var(--text-muted);
-  width: auto;
-  padding: 6px 16px;
-}
-
-.secondary-btn:hover {
-  color: var(--text-main);
-  border-color: var(--text-main);
-}
-
-.disabled-btn {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-muted);
-  cursor: not-allowed;
-}
-
-/* === DASHBOARD Y CATÁLOGO DE JUEGOS === */
-.topbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 40px;
-  background: var(--panel-bg);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-cyan);
+  margin-bottom: 30px;
 }
 
-.logo {
-  font-weight: bold;
-  color: var(--accent-color);
-  letter-spacing: 1px;
+.catalog-header h2 {
+  font-family: 'Cinzel', serif;
+  font-size: 1.6rem;
+  letter-spacing: 2px;
+  text-shadow: 0 0 8px var(--accent-cyan);
 }
 
 .user-info {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 15px;
 }
 
-.content {
-  padding: 40px;
-  max-width: 1200px;
-  margin: 0 auto;
-  width: 100%;
+#user-display {
+  color: var(--accent-blue);
+  font-weight: 600;
 }
 
-.content h2 {
-  margin-bottom: 24px;
+.btn-secondary {
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid var(--border-cyan);
+  color: var(--text-main);
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  border-color: var(--error-color);
+  color: var(--error-color);
+}
+
+.section-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.4rem;
+  margin-bottom: 20px;
+  letter-spacing: 1px;
 }
 
 .games-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 24px;
+  gap: 25px;
+  width: 100%;
 }
 
 .game-card {
-  background: var(--panel-bg);
-  border-radius: var(--border-radius);
+  background: var(--card-bg);
+  border: 1px solid var(--border-cyan);
+  border-radius: 10px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  display: flex;
-  flex-direction: column;
+  transition: all 0.3s ease;
 }
 
-.game-thumb {
-  height: 160px;
+.game-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0 20px rgba(0, 242, 254, 0.2);
+  border-color: var(--accent-cyan);
+}
+
+.game-preview {
+  height: 140px;
+  background: #0d1626;
   position: relative;
-  background-color: #000;
   display: flex;
   align-items: flex-end;
-  padding: 12px;
+  padding: 10px;
 }
 
-.asteroid-bg {
-  background: linear-gradient(45deg, #1d0e2b, #00122e);
-}
-
-.theory-bg {
-  background: linear-gradient(45deg, #0f2b1d, #1a2e00);
-}
-
-.badge {
+.game-badge {
+  background: var(--accent-blue);
+  color: #000;
+  font-weight: 700;
   font-size: 0.75rem;
-  padding: 4px 8px;
+  padding: 2px 8px;
   border-radius: 4px;
-  font-weight: bold;
   text-transform: uppercase;
-}
-
-.active-badge {
-  background: var(--accent-color);
-  color: var(--bg-color);
-}
-
-.upcoming-badge {
-  background: rgba(255, 255, 255, 0.2);
-  color: var(--text-main);
 }
 
 .game-details {
   padding: 20px;
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
 }
 
-.game-details h3 {
+.game-details h4 {
+  font-size: 1.2rem;
   margin-bottom: 8px;
 }
 
 .game-details p {
   color: var(--text-muted);
   font-size: 0.9rem;
-  margin-bottom: 20px;
-  flex-grow: 1;
+  margin-bottom: 18px;
+}
+
+.btn-play {
+  display: block;
+  text-align: center;
+  padding: 10px;
+  background: var(--accent-cyan);
+  color: #000;
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+}
+
+.btn-play:hover {
+  box-shadow: 0 0 15px var(--accent-cyan);
 }
