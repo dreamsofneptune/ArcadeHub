@@ -307,3 +307,26 @@ footer {
   height: 100%;
   border: none;
 }
+
+/* CONTENEDOR DE LA IMAGEN DE VISTA PREVIA */
+.game-thumb {
+  width: 100%;
+  height: 160px; /* Altura fija para la imagen */
+  overflow: hidden;
+  border-radius: 8px;
+  background: #000;
+  margin-bottom: 12px;
+}
+
+/* LA IMAGEN */
+.game-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Evita que la imagen se estire o deforme */
+  transition: transform 0.3s ease;
+}
+
+/* EFECTO ZOOM AL PASAR EL MOUSE POR LA TARJETA */
+.game-item:hover .game-thumb img {
+  transform: scale(1.08);
+}
