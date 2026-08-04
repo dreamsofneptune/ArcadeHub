@@ -1,16 +1,91 @@
-document.addEventListener('DOMContentLoaded', () => {
-  // 1. CONFIGURACIÓN DE SUPABASE
-  const SUPABASE_URL = 'https://idtcuknleogumhoxyvbx.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_P9zbUZ1haG4gTOCVzECXYg_rToJc5y8';
-  
-  // Usamos el cliente global expuesto por el script CDN
-  const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+// ==========================================
+// 1. CONFIGURACIÓN GLOBAL DE SUPABASE
+// ==========================================
+const SUPABASE_URL = 'https://idtcuknleogumhoxyvbx.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_P9zbUZ1haG4gTOCVzECXYg_rToJc5y8';
 
-  if (!supabase) {
-    console.error('No se pudo cargar la librería de Supabase. Revisa el script CDN en tu index.html');
+// Cliente global accesible en todo el archivo y por el iframe
+const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+if (!supabase) {
+  console.error('No se pudo cargar la librería de Supabase. Revisa el script CDN en tu index.html');
+}
+
+// ==========================================
+// 2. SISTEMA DE PUNTUACIONES
+// ==========================================
+
+// Cargar puntuaciones en la interfaz
+async function cargarPuntuacionesUI() {
+  if (!supabase) return;
+
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return;
+
+  const user = session.user;
+
+  const { data: scores, error } = await supabase
+    .from('scores')
+    .select('game_slug, high_score')
+    .eq('user_id', user.id);
+
+  if (error) {
+    console.error('Error al cargar puntuaciones:', error);
     return;
   }
 
+  if (scores) {
+    scores.forEach(item => {
+      const el = document.getElementById(`score-${item.game_slug}`);
+      if (el) {
+        el.innerText = `${item.high_score} pts`;
+      }
+    });
+  }
+}
+
+// Guardar o actualizar récord (Godot llamará a esta función)
+window.guardarPuntaje = async function(gameSlug, puntos) {
+  if (!supabase) return;
+
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    console.warn('No hay usuario logueado. No se guarda la puntuación.');
+    return;
+  }
+
+  const user = session.user;
+
+  // Consultar si ya existe un récord
+  const { data: registro } = await supabase
+    .from('scores')
+    .select('high_score')
+    .eq('user_id', user.id)
+    .eq('game_slug', gameSlug)
+    .maybeSingle();
+
+  if (!registro || puntos > registro.high_score) {
+    const { error } = await supabase
+      .from('scores')
+      .upsert({
+        user_id: user.id,
+        game_slug: gameSlug,
+        high_score: puntos
+      });
+
+    if (error) {
+      console.error('Error al guardar récord en Supabase:', error);
+    } else {
+      console.log(`¡Nuevo récord guardado para ${gameSlug}: ${puntos} pts!`);
+      cargarPuntuacionesUI();
+    }
+  }
+};
+
+// ==========================================
+// 3. LÓGICA DE INTERFAZ Y NAVEGACIÓN
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
   // Elementos de la interfaz
   const loginScreen = document.getElementById('login-screen');
   const catalogScreen = document.getElementById('catalog-screen');
@@ -40,8 +115,9 @@ document.addEventListener('DOMContentLoaded', () => {
     regError.classList.add('hidden');
   });
 
-  // 2. VERIFICAR SESIÓN ACTIVA AL INICIAR
+  // Verificar sesión activa al iniciar
   async function checkSession() {
+    if (!supabase) return;
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
       showCatalog(session.user.email);
@@ -50,8 +126,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   checkSession();
 
-  // 3. REGISTRO EN SUPABASE
-  registerForm.addEventListener('submit', async (e) => {
+  // Registro en Supabase
+  registerForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('reg-email').value.trim();
     const password = document.getElementById('reg-password').value;
@@ -69,14 +145,15 @@ document.addEventListener('DOMContentLoaded', () => {
       registerForm.reset();
       if (data.user && data.session) {
         showCatalog(data.user.email);
+        cargarPuntuacionesUI();
       } else {
         alert('Registro completado. Si tienes activada la confirmación por correo, verifica tu bandeja antes de iniciar sesión.');
       }
     }
   });
 
-  // 4. LOGIN EN SUPABASE
-  loginForm.addEventListener('submit', async (e) => {
+  // Login en Supabase
+  loginForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
@@ -93,11 +170,13 @@ document.addEventListener('DOMContentLoaded', () => {
       loginError.classList.add('hidden');
       loginForm.reset();
       showCatalog(data.user.email);
+      cargarPuntuacionesUI();
     }
   });
 
-  // 5. CERRAR SESIÓN
+  // Cerrar sesión
   logoutBtn?.addEventListener('click', async () => {
+    if (!supabase) return;
     await supabase.auth.signOut();
     showLogin();
   });
@@ -117,7 +196,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Abrir el juego en el popup
+// ==========================================
+// 4. CONTROL DEL POPUP DEL JUEGO (IFRAME)
+// ==========================================
 function openGame(gameUrl) {
   const modal = document.getElementById('game-modal');
   const iframe = document.getElementById('game-iframe');
@@ -126,74 +207,10 @@ function openGame(gameUrl) {
   modal.classList.remove('hidden');
 }
 
-// Cerrar el juego y detener la ejecución
 function closeGame() {
   const modal = document.getElementById('game-modal');
   const iframe = document.getElementById('game-iframe');
   
-  iframe.src = ''; // Limpia la URL para que el juego deje de sonar/ejecutarse de fondo
+  iframe.src = ''; 
   modal.classList.add('hidden');
 }
-
-// ==========================================
-// SISTEMA DE PUNTUACIONES (SUPABASE V1)
-// ==========================================
-
-// 1. Cargar puntuaciones en la interfaz
-async function cargarPuntuacionesUI() {
-  const user = supabase.auth.user();
-  if (!user) return;
-
-  const { data: scores, error } = await supabase
-    .from('scores')
-    .select('game_slug, high_score')
-    .eq('user_id', user.id);
-
-  if (error) {
-    console.error('Error al cargar puntuaciones:', error);
-    return;
-  }
-
-  if (scores) {
-    scores.forEach(item => {
-      const el = document.getElementById(`score-${item.game_slug}`);
-      if (el) {
-        el.innerText = `${item.high_score} pts`;
-      }
-    });
-  }
-}
-
-// 2. Guardar o actualizar récord desde Godot
-window.guardarPuntaje = async function(gameSlug, puntos) {
-  const user = supabase.auth.user();
-  
-  if (!user) {
-    console.warn('No hay usuario logueado.');
-    return;
-  }
-
-  const { data: registro } = await supabase
-    .from('scores')
-    .select('high_score')
-    .eq('user_id', user.id)
-    .eq('game_slug', gameSlug)
-    .single();
-
-  if (!registro || puntos > registro.high_score) {
-    const { error } = await supabase
-      .from('scores')
-      .upsert({
-        user_id: user.id,
-        game_slug: gameSlug,
-        high_score: puntos
-      });
-
-    if (error) {
-      console.error('Error al guardar récord:', error);
-    } else {
-      console.log(`¡Nuevo récord guardado para ${gameSlug}: ${puntos} pts!`);
-      cargarPuntuacionesUI();
-    }
-  }
-};
