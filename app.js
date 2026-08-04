@@ -44,59 +44,46 @@ async function cargarPuntuacionesUI() {
   }
 }
 
-// Guardar o actualizar récord (Godot llamará a esta función)
+// Guardar o actualizar récord desde Godot (Versión ultrarrápida)
 window.guardarPuntaje = async function(gameSlug, puntos) {
   if (!supabaseClient) return;
 
   const nuevoPuntaje = parseInt(puntos, 10);
   if (isNaN(nuevoPuntaje)) return;
 
+  // 1. Obtener sesión localmente (sin esperar verificación en servidor)
   const { data: { session } } = await supabaseClient.auth.getSession();
-  if (!session) {
-    console.warn('No hay usuario logueado. No se guarda la puntuación.');
-    return;
-  }
+  if (!session) return;
 
   const user = session.user;
 
-  // 1. Obtener el puntaje MÁS ALTO guardado para este usuario y juego
-  const { data: registros, error: searchError } = await supabaseClient
-    .from('scores')
-    .select('high_score')
-    .eq('user_id', user.id)
-    .eq('game_slug', gameSlug)
-    .order('high_score', { ascending: false })
-    .limit(1);
+  // 2. Obtener el valor actual visible en la pantalla para comparar al instante
+  const scoreElem = document.getElementById(`score-${gameSlug}`);
+  const recordActualUI = scoreElem ? parseInt(scoreElem.innerText, 10) || 0 : 0;
 
-  if (searchError) {
-    console.error('Error al consultar récord previo:', searchError);
-    return;
-  }
+  // 3. Solo enviamos la petición a la red si el puntaje superó el récord mostrado en la UI
+  if (nuevoPuntaje > recordActualUI) {
+    // Actualizamos la interfaz de inmediato para dar retroalimentación visual al usuario
+    if (scoreElem) scoreElem.innerText = `${nuevoPuntaje} pts`;
 
-  // Comprobar de forma segura si la consulta devolvió datos
-  const listaRegistros = registros || [];
-  const recordActual = listaRegistros.length > 0 ? listaRegistros[0].high_score : 0;
-
-  // 2. Solo actualizar/guardar si no hay registros o el nuevo puntaje es mayor
-  if (listaRegistros.length === 0 || nuevoPuntaje > recordActual) {
-    const { error } = await supabaseClient
+    // 4. Enviamos directamente el upsert a Supabase
+    supabaseClient
       .from('scores')
       .upsert({
         user_id: user.id,
         game_slug: gameSlug,
         high_score: nuevoPuntaje
+      })
+      .then(({ error }) => {
+        if (error) {
+          console.error('Error al guardar en Supabase:', error);
+        } else {
+          console.log(`¡Récord para ${gameSlug} guardado exitosamente: ${nuevoPuntaje} pts!`);
+        }
       });
-
-    if (error) {
-      console.error('Error al guardar récord en Supabase:', error);
-    } else {
-      console.log(`¡Nuevo récord guardado para ${gameSlug}: ${nuevoPuntaje} pts (Anterior: ${recordActual})!`);
-      cargarPuntuacionesUI();
-    }
-  } else {
-    console.log(`Puntaje obtenido (${nuevoPuntaje} pts) no supera el récord actual (${recordActual} pts). No se guarda.`);
   }
 };
+
 // ==========================================
 // 3. LÓGICA DE INTERFAZ Y NAVEGACIÓN
 // ==========================================
