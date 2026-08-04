@@ -66,24 +66,26 @@ window.guardarPuntaje = async function(gameSlug, puntos) {
     .select('high_score')
     .eq('user_id', user.id)
     .eq('game_slug', gameSlug)
-    .maybeSingle();
+    .order('high_score', { ascending: false })
+    .limit(1);
 
   if (searchError) {
     console.error('Error al consultar récord previo:', searchError);
     return;
   }
 
-  const recordActual = registro ? registro.high_score : 0;
+  // Si existen registros previa, tomamos el más alto; si no, 0
+  const recordActual = (registros && registros.length > 0) ? registros[0].high_score : 0;
 
-  // 2. SOLO guardar si el nuevo puntaje es estrictamente mayor
-  if (!registro || nuevoPuntaje > recordActual) {
+  // 2. Solo actualizar/guardar si el nuevo puntaje supera el récord actual
+  if (registros.length === 0 || nuevoPuntaje > recordActual) {
     const { error } = await supabaseClient
       .from('scores')
       .upsert({
         user_id: user.id,
         game_slug: gameSlug,
         high_score: nuevoPuntaje
-      }, { onConflict: 'user_id, game_slug' });
+      });
 
     if (error) {
       console.error('Error al guardar récord en Supabase:', error);
@@ -92,10 +94,9 @@ window.guardarPuntaje = async function(gameSlug, puntos) {
       cargarPuntuacionesUI();
     }
   } else {
-    console.log(`Puntaje obtenido (${nuevoPuntaje} pts) no supera el récord actual (${recordActual} pts). No se actualiza.`);
+    console.log(`Puntaje obtenido (${nuevoPuntaje} pts) no supera el récord actual (${recordActual} pts). No se guarda.`);
   }
 };
-
 // ==========================================
 // 3. LÓGICA DE INTERFAZ Y NAVEGACIÓN
 // ==========================================
