@@ -45,6 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
       showCatalog(session.user.email);
+      cargarPuntuacionesUI();
     }
   }
   checkSession();
@@ -133,3 +134,72 @@ function closeGame() {
   iframe.src = ''; // Limpia la URL para que el juego deje de sonar/ejecutarse de fondo
   modal.classList.add('hidden');
 }
+
+// ==========================================
+// SISTEMA DE PUNTUACIONES (SUPABASE)
+// ==========================================
+
+// 1. Función para cargar y mostrar los récords en las tarjetas de los juegos
+async function cargarPuntuacionesUI() {
+  // Obtener el usuario autenticado actual
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  // Consultar todas las puntuaciones del usuario activo
+  const { data: scores, error } = await supabase
+    .from('scores')
+    .select('game_slug, high_score')
+    .eq('user_id', user.id);
+
+  if (error) {
+    console.error('Error al cargar puntuaciones:', error);
+    return;
+  }
+
+  // Actualizar el texto en cada tarjeta del catálogo
+  if (scores) {
+    scores.forEach(item => {
+      const el = document.getElementById(`score-${item.game_slug}`);
+      if (el) {
+        el.innerText = `${item.high_score} pts`;
+      }
+    });
+  }
+}
+
+// 2. Función global para guardar o actualizar el récord (Godot llamará a esta función)
+window.guardarPuntaje = async function(gameSlug, puntos) {
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    console.warn('No hay usuario logueado. No se guarda la puntuación.');
+    return;
+  }
+
+  // Consultar si ya existe un récord previo para este juego
+  const { data: registro } = await supabase
+    .from('scores')
+    .select('high_score')
+    .eq('user_id', user.id)
+    .eq('game_slug', gameSlug)
+    .single();
+
+  // Si no existe registro o el nuevo puntaje es superior, actualizamos en Supabase
+  if (!registro || puntos > registro.high_score) {
+    const { error } = await supabase
+      .from('scores')
+      .upsert({
+        user_id: user.id,
+        game_slug: gameSlug,
+        high_score: puntos
+      }, { onConflict: 'user_id,game_slug' });
+
+    if (error) {
+      console.error('Error al guardar récord en Supabase:', error);
+    } else {
+      console.log(`¡Nuevo récord guardado para ${gameSlug}: ${puntos} pts!`);
+      // Refrescar la UI del catálogo
+      cargarPuntuacionesUI();
+    }
+  }
+};

@@ -330,3 +330,11 @@ footer {
 .game-item:hover .game-thumb img {
   transform: scale(1.08);
 }
+
+.highscore-tag {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #ffd700; /* Color dorado para destacar el trofeo */
+  margin-top: 6px;
+  margin-bottom: 10px;
+}
