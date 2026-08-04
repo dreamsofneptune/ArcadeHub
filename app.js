@@ -48,6 +48,10 @@ async function cargarPuntuacionesUI() {
 window.guardarPuntaje = async function(gameSlug, puntos) {
   if (!supabaseClient) return;
 
+  // Asegurarnos de tener el valor de puntos como número entero
+  const nuevoPuntaje = parseInt(puntos, 10);
+  if (isNaN(nuevoPuntaje)) return;
+
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (!session) {
     console.warn('No hay usuario logueado. No se guarda la puntuación.');
@@ -56,29 +60,39 @@ window.guardarPuntaje = async function(gameSlug, puntos) {
 
   const user = session.user;
 
-  // Consultar si ya existe un récord
-  const { data: registro } = await supabaseClient
+  // 1. Obtener el récord actual guardado en Supabase
+  const { data: registro, error: searchError } = await supabaseClient
     .from('scores')
     .select('high_score')
     .eq('user_id', user.id)
     .eq('game_slug', gameSlug)
     .maybeSingle();
 
-  if (!registro || puntos > registro.high_score) {
+  if (searchError) {
+    console.error('Error al consultar récord previo:', searchError);
+    return;
+  }
+
+  const recordActual = registro ? registro.high_score : 0;
+
+  // 2. SOLO guardar si el nuevo puntaje es estrictamente mayor
+  if (!registro || nuevoPuntaje > recordActual) {
     const { error } = await supabaseClient
       .from('scores')
       .upsert({
         user_id: user.id,
         game_slug: gameSlug,
-        high_score: puntos
-      });
+        high_score: nuevoPuntaje
+      }, { onConflict: 'user_id, game_slug' });
 
     if (error) {
       console.error('Error al guardar récord en Supabase:', error);
     } else {
-      console.log(`¡Nuevo récord guardado para ${gameSlug}: ${puntos} pts!`);
+      console.log(`¡Nuevo récord guardado para ${gameSlug}: ${nuevoPuntaje} pts (Anterior: ${recordActual})!`);
       cargarPuntuacionesUI();
     }
+  } else {
+    console.log(`Puntaje obtenido (${nuevoPuntaje} pts) no supera el récord actual (${recordActual} pts). No se actualiza.`);
   }
 };
 
@@ -211,6 +225,11 @@ function closeGame() {
   const modal = document.getElementById('game-modal');
   const iframe = document.getElementById('game-iframe');
   
-  iframe.src = ''; 
+  // Ocultamos el cuadro visualmente de inmediato para que el usuario sienta la respuesta rápida
   modal.classList.add('hidden');
+
+  // Le damos 500ms al proceso de red para completar el guardado antes de destruir la sesión del iframe
+  setTimeout(() => {
+    iframe.src = ''; 
+  }, 500);
 }
