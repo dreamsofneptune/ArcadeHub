@@ -48,7 +48,6 @@ async function cargarPuntuacionesUI() {
 window.guardarPuntaje = async function(gameSlug, puntos) {
   if (!supabaseClient) return;
 
-  // Asegurarnos de tener el valor de puntos como número entero
   const nuevoPuntaje = parseInt(puntos, 10);
   if (isNaN(nuevoPuntaje)) return;
 
@@ -60,8 +59,8 @@ window.guardarPuntaje = async function(gameSlug, puntos) {
 
   const user = session.user;
 
-  // 1. Obtener el récord actual guardado en Supabase
-  const { data: registro, error: searchError } = await supabaseClient
+  // 1. Obtener el puntaje MÁS ALTO guardado para este usuario y juego
+  const { data: registros, error: searchError } = await supabaseClient
     .from('scores')
     .select('high_score')
     .eq('user_id', user.id)
@@ -74,11 +73,12 @@ window.guardarPuntaje = async function(gameSlug, puntos) {
     return;
   }
 
-  // Si existen registros previa, tomamos el más alto; si no, 0
-  const recordActual = (registros && registros.length > 0) ? registros[0].high_score : 0;
+  // Comprobar de forma segura si la consulta devolvió datos
+  const listaRegistros = registros || [];
+  const recordActual = listaRegistros.length > 0 ? listaRegistros[0].high_score : 0;
 
-  // 2. Solo actualizar/guardar si el nuevo puntaje supera el récord actual
-  if (registros.length === 0 || nuevoPuntaje > recordActual) {
+  // 2. Solo actualizar/guardar si no hay registros o el nuevo puntaje es mayor
+  if (listaRegistros.length === 0 || nuevoPuntaje > recordActual) {
     const { error } = await supabaseClient
       .from('scores')
       .upsert({
