@@ -4,10 +4,10 @@
 const SUPABASE_URL = 'https://idtcuknleogumhoxyvbx.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_P9zbUZ1haG4gTOCVzECXYg_rToJc5y8';
 
-// Cliente global accesible en todo el archivo y por el iframe
-const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+// Usamos supabaseClient para no chocar con la variable global del CDN
+const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
-if (!supabase) {
+if (!supabaseClient) {
   console.error('No se pudo cargar la librería de Supabase. Revisa el script CDN en tu index.html');
 }
 
@@ -17,14 +17,14 @@ if (!supabase) {
 
 // Cargar puntuaciones en la interfaz
 async function cargarPuntuacionesUI() {
-  if (!supabase) return;
+  if (!supabaseClient) return;
 
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await supabaseClient.auth.getSession();
   if (!session) return;
 
   const user = session.user;
 
-  const { data: scores, error } = await supabase
+  const { data: scores, error } = await supabaseClient
     .from('scores')
     .select('game_slug, high_score')
     .eq('user_id', user.id);
@@ -46,9 +46,9 @@ async function cargarPuntuacionesUI() {
 
 // Guardar o actualizar récord (Godot llamará a esta función)
 window.guardarPuntaje = async function(gameSlug, puntos) {
-  if (!supabase) return;
+  if (!supabaseClient) return;
 
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await supabaseClient.auth.getSession();
   if (!session) {
     console.warn('No hay usuario logueado. No se guarda la puntuación.');
     return;
@@ -57,7 +57,7 @@ window.guardarPuntaje = async function(gameSlug, puntos) {
   const user = session.user;
 
   // Consultar si ya existe un récord
-  const { data: registro } = await supabase
+  const { data: registro } = await supabaseClient
     .from('scores')
     .select('high_score')
     .eq('user_id', user.id)
@@ -65,7 +65,7 @@ window.guardarPuntaje = async function(gameSlug, puntos) {
     .maybeSingle();
 
   if (!registro || puntos > registro.high_score) {
-    const { error } = await supabase
+    const { error } = await supabaseClient
       .from('scores')
       .upsert({
         user_id: user.id,
@@ -117,8 +117,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Verificar sesión activa al iniciar
   async function checkSession() {
-    if (!supabase) return;
-    const { data: { session } } = await supabase.auth.getSession();
+    if (!supabaseClient) return;
+    const { data: { session } } = await supabaseClient.auth.getSession();
     if (session) {
       showCatalog(session.user.email);
       cargarPuntuacionesUI();
@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const email = document.getElementById('reg-email').value.trim();
     const password = document.getElementById('reg-password').value;
 
-    const { data, error } = await supabase.auth.signUp({
+    const { data, error } = await supabaseClient.auth.signUp({
       email: email,
       password: password,
     });
@@ -158,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const email = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
       email: email,
       password: password,
     });
@@ -176,8 +176,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Cerrar sesión
   logoutBtn?.addEventListener('click', async () => {
-    if (!supabase) return;
-    await supabase.auth.signOut();
+    if (!supabaseClient) return;
+    await supabaseClient.auth.signOut();
     showLogin();
   });
 
